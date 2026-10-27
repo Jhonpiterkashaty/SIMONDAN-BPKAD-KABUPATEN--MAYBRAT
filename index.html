@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMONDA PRO - Sistem Monitoring & Dokumen Administrasi Pemkab Maybrat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .table-header-green {
+            background-color: #8bc34a !important;
+            color: #000000 !important;
+            font-weight: bold;
+        }
+        .bg-kantor-overlay {
+            background: linear-gradient(rgba(4, 47, 31, 0.88), rgba(6, 78, 59, 0.88)), url('kantor.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; padding: 0 !important; margin: 0 !important; }
+            .shadow-md, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+            .print-border-none { border: none !important; }
+            #printHeaderLogo { display: flex !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen text-gray-800">
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-300 ease-in-out bg-emerald-800 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 border border-emerald-600">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-amber-300 text-lg"></i>
+        <span id="toastMsg" class="text-xs font-semibold">Notifikasi</span>
+    </div>
+
+    <!-- ================= 1. HALAMAN LOGIN DESKTOP & MOBILE ================= -->
+    <div id="authContainer" class="flex items-center justify-center min-h-screen p-4 bg-kantor-overlay">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden border border-emerald-950 flex flex-col md:flex-row">
+            
+            <!-- GAMBAR KANTOR BANNER DESKTOP -->
+            <div class="md:w-1/2 relative min-h-[260px] md:min-h-full bg-cover bg-center flex items-end p-6" style="background-image: linear-gradient(to top, rgba(6, 78, 59, 0.95), rgba(0,0,0,0.3)), url('kantor.jpg');">
+                <div class="relative z-10 text-white space-y-2">
+                    <div class="flex items-center gap-3 mb-2">
+                        <img src="logo.png" alt="Logo Pemkab Maybrat" class="h-16 w-auto object-contain bg-white/10 p-1.5 rounded-lg border border-white/20">
+                        <span class="bg-emerald-500/30 text-amber-300 font-black px-2.5 py-1 rounded border border-amber-300/40 text-xs tracking-widest uppercase">PRODUKSI RESMI</span>
+                    </div>
+                    
+                    <div class="pt-1">
+                        <h1 class="text-3xl md:text-4xl font-black text-amber-300 tracking-wider drop-shadow-md">SIMONDA</h1>
+                        <p class="text-xs text-emerald-100 font-medium">Sistem Monitoring & Dokumen Administrasi SPM</p>
+                    </div>
+
+                    <div class="border-t border-emerald-600/50 pt-2 mt-2">
+                        <h2 class="text-xs font-bold tracking-wide uppercase text-gray-200">PEMERINTAH KABUPATEN MAYBRAT</h2>
+                        <span class="inline-block mt-2 bg-amber-400 text-gray-900 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">ANU BETA TUBAT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM CONTAINER (KOLOM KANAN) -->
+            <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-center bg-white">
+                
+                <!-- FORM LOGIN -->
+                <div id="loginFormBox" class="space-y-4">
+                    <div class="border-b pb-3">
+                        <h3 class="text-xl font-black text-emerald-900">Masuk ke SIMONDA</h3>
+                        <p class="text-xs text-gray-500">Silakan masukkan akun pengguna untuk verifikasi berkas SPM</p>
+                    </div>
+                    
+                    <div id="loginAlert" class="hidden text-xs bg-red-100 text-red-700 p-2.5 rounded border border-red-300"></div>
+                    
+                    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Username / Email / No. HP</label>
+                            <!-- Kolom dikosongkan tanpa nilai bawaan -->
+                            <input type="text" id="loginUsername" required value="" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Kata Sandi (Password)</label>
+                            <!-- Kolom password dikosongkan sepenuhnya -->
+                            <input type="password" id="loginPassword" required value="" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <label class="flex items-center text-gray-600 cursor-pointer">
+                                <input type="checkbox" id="rememberMe" class="rounded text-emerald-600 mr-1.5"> Ingat Saya
+                            </label>
+                            <a href="#" onclick="showResetForm(event)" class="text-emerald-700 hover:underline font-semibold">Lupa Password?</a>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> MASUK KE SIMONDA
+                        </button>
+                    </form>
+                </div>
+
+                <!-- FORM RESET PASSWORD OTP -->
+                <div id="resetFormBox" class="hidden space-y-4">
+                    <div class="border-b pb-3">
+                        <h3 class="text-lg font-bold text-gray-800">Reset Password (SIMONDA OTP)</h3>
+                        <p class="text-xs text-gray-500">Verifikasi kode OTP melalui WhatsApp / SMS</p>
+                    </div>
+
+                    <div id="otpStep1" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Pilih Nomor HP/WA Terdaftar</label>
+                            <select id="resetTargetPhone" class="w-full border rounded-lg p-2.5 text-xs bg-gray-50 font-medium">
+                                <option value="081214823307">WhatsApp / HP: 081214823307</option>
+                            </select>
+                        </div>
+                        <button onclick="sendOtpCode()" type="button" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg text-xs shadow transition flex items-center justify-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-sm"></i> Kirim Kode OTP Ke WhatsApp/SMS
+                        </button>
+                    </div>
+
+                    <div id="otpStep2" class="hidden space-y-3">
+                        <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200 text-xs text-emerald-800 flex justify-between items-center">
+                            <span>Kode OTP terkirim ke: <strong id="displayOtpNum">081214823307</strong></span>
+                            <span class="font-bold text-emerald-900 bg-white px-2 py-0.5 rounded border" id="simulatedOtpCode">******</span>
+                        </div>
+
+                        <form onsubmit="handleOtpReset(event)" class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Masukkan Kode OTP 6 Digit</label>
+                                <input type="text" id="inputOtpCode" maxlength="6" required value="" class="w-full border rounded-lg p-2.5 text-xs font-mono tracking-widest text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Kata Sandi Baru</label>
+                                <input type="password" id="directNewPassword" required value="" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Konfirmasi Kata Sandi Baru</label>
+                                <input type="password" id="confirmNewPassword" required value="" class="w-full border rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-2.5 rounded-lg text-xs shadow transition">
+                                VERIFIKASI OTP & SIMPAN PASSWORD
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="text-center pt-2">
+                        <button onclick="showLogin(event)" class="text-xs text-gray-500 hover:text-gray-800 font-semibold">
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Kembali ke Login
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. HALAMAN DASBOR SIMONDA ================= -->
+    <div id="appContainer" class="hidden max-w-7xl mx-auto space-y-6 p-3 md:p-6">
+        
+        <!-- Header Utama SIMONDA -->
+        <header class="bg-emerald-800 text-white rounded-xl shadow-lg p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+            <div class="flex items-center gap-4">
+                <img src="logo.png" alt="Logo Pemkab Maybrat" class="h-16 w-auto object-contain bg-white/10 p-1.5 rounded-lg border border-white/20">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-2xl md:text-3xl font-black text-amber-300 tracking-wider">SIMONDA</h1>
+                        <span class="bg-amber-400 text-gray-900 text-[10px] font-black px-2 py-0.5 rounded uppercase">MAYBRAT</span>
+                    </div>
+                    <p class="text-xs md:text-sm text-emerald-200">Sistem Monitoring & Dokumen Administrasi Verifikasi SPM</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full md:w-auto justify-end">
+                <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-plus-circle"></i> Input Dokumen
+                </button>
+                <button onclick="exportWord()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-file-word"></i> Ekspor Word
+                </button>
+                <button onclick="exportPDF()" class="bg-red-600 hover:bg-red-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-file-pdf"></i> Ekspor PDF
+                </button>
+                <button onclick="window.print()" class="bg-gray-900 hover:bg-black text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-print"></i> Cetak
+                </button>
+                <button onclick="handleLogout()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                    <i class="fa-solid fa-right-from-bracket"></i> Keluar
+                </button>
+            </div>
+        </header>
+
+        <!-- KARTU STATISTIK DASBOR -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 no-print">
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-emerald-600 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Dokumen</p>
+                    <h3 class="text-2xl font-extrabold text-gray-800 mt-1" id="statTotalDoc">0</h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Berkas Terdaftar</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 text-xl">
+                    <i class="fa-solid fa-folder"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-blue-600 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Pencairan</p>
+                    <h3 class="text-base font-extrabold text-gray-800 mt-1" id="statTotalNilai">Rp 0</h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Nilai Anggaran</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-green-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dokumen Lengkap</p>
+                    <h3 class="text-2xl font-extrabold text-green-600 mt-1" id="statLengkap">0</h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Siap Proses SPM</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-amber-500 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Belum Lengkap</p>
+                    <h3 class="text-2xl font-extrabold text-amber-600 mt-1" id="statBelumLengkap">0</h3>
+                    <p class="text-[10px] text-gray-500 mt-1">Kurang Syarat Berkas</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 text-xl">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- AREA KONTEN LAPORAN UTAMA -->
+        <div id="printableArea" class="bg-white p-6 rounded-xl shadow-md border border-gray-200 print-border-none">
+            
+            <!-- Kop Instansi Berlogo -->
+            <div id="printHeaderLogo" class="flex items-center justify-center gap-6 mb-4 pb-3 border-b-2 border-black">
+                <img src="logo.png" alt="Logo Pemkab Maybrat" class="h-20 w-auto object-contain">
+                <div class="text-center font-serif">
+                    <h2 class="text-lg font-bold tracking-wide uppercase text-black">Pemerintah Kabupaten Maybrat</h2>
+                    <h3 class="text-base font-bold tracking-wider text-black">BADAN PENGELOLAAN KEUANGAN DAN ASET DAERAH</h3>
+                    <p class="text-xs text-gray-700">Kumurkek, Kabupaten Maybrat, Papua Barat Daya</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center my-4 gap-3 no-print">
+                <h2 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-table text-emerald-700"></i> Output Data SIMONDA (Dokumen SPM)
+                </h2>
+                <div class="relative w-full md:w-72">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                        <i class="fa-solid fa-search text-xs"></i>
+                    </span>
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari OPD / No SPM..." class="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+            </div>
+
+            <div class="text-center my-4">
+                <h2 class="text-base md:text-lg font-bold text-black font-serif uppercase">REKAPITULASI OUTPUT DOKUMEN SPM - TAHUN 2026</h2>
+            </div>
+
+            <!-- Tabel Output Ber-Header Hijau -->
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse border border-black text-xs text-left">
+                    <thead>
+                        <tr class="table-header-green text-center text-black border-b border-black">
+                            <th class="border border-black p-2 w-10">No</th>
+                            <th class="border border-black p-2 min-w-[110px]">Tanggal Penerimaan</th>
+                            <th class="border border-black p-2 min-w-[170px]">OPD</th>
+                            <th class="border border-black p-2 min-w-[120px]">Jenis Dokumen</th>
+                            <th class="border border-black p-2 min-w-[150px]">Nomor SPM</th>
+                            <th class="border border-black p-2 min-w-[130px]">Nilai Pencairan</th>
+                            <th class="border border-black p-2 min-w-[130px]">Kelengkapan Dokumen</th>
+                            <th class="border border-black p-2 min-w-[90px]">Status</th>
+                            <th class="border border-black p-2 min-w-[130px]">Keterangan</th>
+                            <th class="border border-black p-2 w-28 no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CETAK SURAT SPM -->
+    <div id="spmPrintModal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50 flex justify-center items-start overflow-y-auto py-6">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden border">
+            <div class="bg-blue-800 text-white px-6 py-4 flex justify-between items-center no-print">
+                <h3 class="text-base font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice"></i> Pratinjau Lembar Surat Cek List SPM
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1 shadow">
+                        <i class="fa-solid fa-print"></i> Cetak Lembar Ini
+                    </button>
+                    <button onclick="closeSpmModal()" class="text-white hover:text-gray-200 text-2xl ml-2">&times;</button>
+                </div>
+            </div>
+
+            <div class="p-8 max-h-[85vh] overflow-y-auto bg-white font-serif" id="spmSheetContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM INPUT & VERIFIKASI -->
+    <div id="inputModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex justify-center items-start overflow-y-auto py-6 no-print">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden">
+            <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="logo.png" alt="Logo" class="h-8 w-auto bg-white p-0.5 rounded">
+                    <h3 id="modalTitle" class="text-base font-bold">SIMONDA - Formulir Verifikasi Dokumen SPM</h3>
+                </div>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+            </div>
+
+            <div class="p-6 max-h-[80vh] overflow-y-auto space-y-4">
+                <form id="docForm" onsubmit="saveDocument(event)">
+                    <input type="hidden" id="editIndex" value="-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="font-bold text-gray-700">Tanggal Verifikasi / Penerimaan</label>
+                            <input type="date" id="tglPenerimaan" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">OPD</label>
+                            <input type="text" id="opd" placeholder="Contoh: DINAS PEKERJAAN UMUM" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="font-bold text-gray-700">Kegiatan / Uraian Pekerjaan</label>
+                            <input type="text" id="kegiatan" placeholder="Masukkan rincian kegiatan pekerjaan" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Nomor Kontrak</label>
+                            <input type="text" id="nomorKontrak" placeholder="Nomor Surat Kontrak" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Nilai Kontrak (Rp)</label>
+                            <input type="number" id="nilaiKontrak" placeholder="Nilai Pagu Kontrak" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Pelaksana / Rekanan</label>
+                            <input type="text" id="pelaksana" placeholder="Nama Perusahaan / CV" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Sumber Dana</label>
+                            <input type="text" id="sumberDana" placeholder="OTSUS / DAU / DAK" class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Tagihan (%)</label>
+                            <input type="text" id="tagihan" placeholder="Contoh: 30% / 100%" class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Jenis Dokumen</label>
+                            <input type="text" id="jenisDokumen" placeholder="Kontrak LS / Uang Muka" value="Kontrak LS" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Nomor SPM</label>
+                            <input type="text" id="nomorSpm" placeholder="Nomor SPM Resmi" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Nilai Pencairan SPM (Rp)</label>
+                            <input type="number" id="nilaiPencairan" placeholder="Nilai Pencairan SPM" required class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Status Dokumen</label>
+                            <select id="statusDokumen" class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="Lengkap">Lengkap</option>
+                                <option value="Belum Lengkap">Belum Lengkap</option>
+                                <option value="Ditolak">Ditolak</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-700">Nama Verifikator</label>
+                            <input type="text" id="verifikator" placeholder="Nama Petugas Verifikator" class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="font-bold text-gray-700">Catatan Tambahan</label>
+                            <input type="text" id="keterangan" placeholder="Catatan berkas" class="w-full border rounded p-2 mt-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-gray-800 text-xs mt-4 mb-2">Checklist Kelengkapan Dokumen Kontrak SIMONDA</h4>
+                    <div class="border rounded p-3 bg-gray-50 max-h-48 overflow-y-auto text-xs space-y-1" id="checklistContainer"></div>
+
+                    <div class="mt-6 flex justify-end gap-2">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded text-gray-600 text-xs font-semibold">Batal</button>
+                        <button type="submit" id="submitBtnText" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-semibold shadow">Simpan & Generasi SPM</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT ENGINE PRODUKSI SIMONDA -->
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('simonda_user_account')) || {
+            username: "admin",
+            password: "admin123",
+            hp: "081214823307",
+            email: "jhonpiterkashaty@gmail.com"
+        };
+
+        let generatedOtpCode = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedSession = localStorage.getItem('simonda_active_session');
+            if (savedSession === 'true') {
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+            }
+        });
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = msg;
+            if (isError) {
+                toast.classList.remove('bg-emerald-800');
+                toast.classList.add('bg-red-800');
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-300 text-lg";
+            } else {
+                toast.classList.remove('bg-red-800');
+                toast.classList.add('bg-emerald-800');
+                toastIcon.className = "fa-solid fa-circle-check text-amber-300 text-lg";
+            }
+
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3500);
+        }
+
+        function handleLogin(e) {
+            if (e) e.preventDefault();
+            const uInput = document.getElementById('loginUsername').value.trim().toLowerCase();
+            const pInput = document.getElementById('loginPassword').value.trim();
+            const alertBox = document.getElementById('loginAlert');
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            const validUser = currentUser.username.toLowerCase();
+            const validEmail = currentUser.email.toLowerCase();
+            const validHp = currentUser.hp;
+
+            if ((uInput === validUser || uInput === validEmail || uInput === validHp) && pInput === currentUser.password) {
+                alertBox.classList.add('hidden');
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                if (rememberMe) {
+                    localStorage.setItem('simonda_active_session', 'true');
+                }
+                showToast("Berhasil Masuk ke Aplikasi SIMONDA!");
+            } else {
+                alertBox.classList.remove('hidden');
+                alertBox.innerText = "Username/Email/HP atau Password salah!";
+            }
+        }
+
+        function handleLogout() {
+            if (confirm("Apakah Anda yakin ingin keluar dari aplikasi SIMONDA?")) {
+                localStorage.removeItem('simonda_active_session');
+                document.getElementById('appContainer').classList.add('hidden');
+                document.getElementById('authContainer').classList.remove('hidden');
+                showLogin();
+                showToast("Anda telah keluar dari aplikasi.");
+            }
+        }
+
+        function showLogin(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginFormBox').classList.remove('hidden');
+            document.getElementById('resetFormBox').classList.add('hidden');
+        }
+
+        function showResetForm(e) {
+            if (e) e.preventDefault();
+            document.getElementById('loginFormBox').classList.add('hidden');
+            document.getElementById('resetFormBox').classList.remove('hidden');
+            document.getElementById('otpStep1').classList.remove('hidden');
+            document.getElementById('otpStep2').classList.add('hidden');
+        }
+
+        function sendOtpCode() {
+            const selectedPhone = document.getElementById('resetTargetPhone').value;
+            generatedOtpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            document.getElementById('displayOtpNum').innerText = selectedPhone;
+            document.getElementById('simulatedOtpCode').innerText = generatedOtpCode;
+
+            document.getElementById('otpStep1').classList.add('hidden');
+            document.getElementById('otpStep2').classList.remove('hidden');
+
+            showToast(`Kode OTP Terkirim ke WA/SMS ${selectedPhone}`);
+        }
+
+        function handleOtpReset(e) {
+            if (e) e.preventDefault();
+            const enteredOtp = document.getElementById('inputOtpCode').value.trim();
+            const newPass = document.getElementById('directNewPassword').value.trim();
+            const confirmPass = document.getElementById('confirmNewPassword').value.trim();
+
+            if (enteredOtp !== generatedOtpCode) {
+                showToast("Kode OTP Salah!", true);
+                return;
+            }
+
+            if (!newPass) {
+                showToast("Kata sandi baru tidak boleh kosong!", true);
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                showToast("Konfirmasi kata sandi tidak cocok!", true);
+                return;
+            }
+
+            currentUser.password = newPass;
+            localStorage.setItem('simonda_user_account', JSON.stringify(currentUser));
+            showToast("Kata sandi berhasil diperbarui!");
+            showLogin();
+            document.getElementById('loginPassword').value = '';
+        }
+
+        const itemsList = [
+            "1. Kontrak / SPK", "2. Addendum (Jika Ada)", "3. RAB", "4. Spesifikasi Teknis/KA", "5. Jadwal Kurva S",
+            "6. Gambar Shop Drawing", "7. Gambar As Building Drawing", "8. MC-0 dan MC-100",
+            "9. Laporan Kemajuan Pekerjaan", "10. Laporan Pengujian Laboratorium", "11. Back Up Perhitungan Volume",
+            "12. Dokumentasi Pekerjaan", "13. BA Kemajuan Pekerjaan", "14. BA Pemeriksaan Pekerjaan",
+            "15. BA Penyelesaian Pekerjaan", "16. BA Pembayaran", "17. Jaminan Asuransi",
+            "18.a. Surat Penyediaan Permintaan Pembayaran", "18.b. Standar Ketentuan Dan Syarat Umum",
+            "18.c. Profil Perusahaan", "18.d. Kwitansi (Materai 10,000 Pihak Ke-3, PPTK, PPK, Bendahara & PA/KPA)", 
+            "18.e. Faktur Tagihan", "18.f. Faktur Pajak PPN", "18.g. SSP, PPN, dan SPP PPh", "18.h. Copy NPWP Rekanan",
+            "18.i. Copy Rekening Bank Rekanan", "18.j. Surat Perintah Membayar (SPP, SPM)",
+            "18.k. Surat Pernyataan Tanggung Jawab Mutlak", "18.l. Lamp. Dokumen Kontrak",
+            "18.m. Berita Acara Serah Terima Pekerjaan (PHO)", "18.n. Rekomendasi Aset", "18.o. Rekomendasi Inspektorat"
+        ];
+
+        let documentsData = JSON.parse(localStorage.getItem('spm_maybrat_full_data')) || [];
+
+        function initChecklist(savedChecklist = {}) {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = '';
+            itemsList.forEach((item, idx) => {
+                const isChecked = savedChecklist[idx] ? 'checked' : '';
+                container.innerHTML += `
+                    <label class="flex items-center gap-2 py-0.5 border-b border-gray-200 cursor-pointer">
+                        <input type="checkbox" id="chk_${idx}" ${isChecked} class="rounded text-emerald-600">
+                        <span>${item}</span>
+                    </label>
+                `;
+            });
+        }
+
+        function updateDashboardStats() {
+            let totalNilai = 0;
+            let lengkapCount = 0;
+            let belumLengkapCount = 0;
+
+            documentsData.forEach(doc => {
+                totalNilai += Number(doc.nilaiPencairan || 0);
+                if (doc.status === "Lengkap") lengkapCount++;
+                else belumLengkapCount++;
+            });
+
+            document.getElementById('statTotalDoc').innerText = documentsData.length;
+            document.getElementById('statTotalNilai').innerText = `Rp ${totalNilai.toLocaleString('id-ID')}`;
+            document.getElementById('statLengkap').innerText = lengkapCount;
+            document.getElementById('statBelumLengkap').innerText = belumLengkapCount;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const totalRows = Math.max(documentsData.length, 10);
+
+            for (let i = 0; i < totalRows; i++) {
+                const doc = documentsData[i];
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-black hover:bg-gray-50 h-9 text-xs";
+
+                if (doc) {
+                    tr.innerHTML = `
+                        <td class="border border-black p-2 text-center font-medium">${i + 1}</td>
+                        <td class="border border-black p-2">${doc.tglPenerimaan || ''}</td>
+                        <td class="border border-black p-2 font-semibold">${doc.opd || ''}</td>
+                        <td class="border border-black p-2">${doc.jenisDokumen || ''}</td>
+                        <td class="border border-black p-2 font-mono">${doc.nomorSpm || ''}</td>
+                        <td class="border border-black p-2">Rp ${Number(doc.nilaiPencairan || 0).toLocaleString('id-ID')}</td>
+                        <td class="border border-black p-2 text-center">${doc.kelengkapan || ''}</td>
+                        <td class="border border-black p-2 text-center font-bold ${doc.status === 'Lengkap' ? 'text-green-700' : 'text-amber-600'}">${doc.status || ''}</td>
+                        <td class="border border-black p-2">${doc.keterangan || ''}</td>
+                        <td class="border border-black p-2 text-center no-print">
+                            <div class="flex justify-center gap-1.5">
+                                <button onclick="printSpmSheet(${i})" class="text-blue-600 hover:text-blue-800 p-1" title="Cetak Surat SPM"><i class="fa-solid fa-file-invoice"></i></button>
+                                <button onclick="editDoc(${i})" class="text-emerald-600 hover:text-emerald-800 p-1" title="Edit Data"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteDoc(${i})" class="text-red-600 hover:text-red-800 p-1" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td class="border border-black p-2 text-center text-gray-300">${i + 1}</td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2"></td>
+                        <td class="border border-black p-2 no-print"></td>
+                    `;
+                }
+                tbody.appendChild(tr);
+            }
+
+            updateDashboardStats();
+        }
+
+        function openModal() {
+            document.getElementById('inputModal').classList.remove('hidden');
+            document.getElementById('docForm').reset();
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('modalTitle').innerText = "SIMONDA - Formulir Verifikasi Dokumen SPM";
+            document.getElementById('submitBtnText').innerText = "Simpan & Generasi SPM";
+            document.getElementById('tglPenerimaan').valueAsDate = new Date();
+            initChecklist();
+        }
+
+        function editDoc(index) {
+            const doc = documentsData[index];
+            if (!doc) return;
+
+            document.getElementById('inputModal').classList.remove('hidden');
+            document.getElementById('editIndex').value = index;
+            document.getElementById('modalTitle').innerText = "SIMONDA - Edit Data Dokumen SPM";
+            document.getElementById('submitBtnText').innerText = "Perbarui Data SPM";
+
+            document.getElementById('tglPenerimaan').value = doc.tglPenerimaan || '';
+            document.getElementById('opd').value = doc.opd || '';
+            document.getElementById('kegiatan').value = doc.kegiatan || '';
+            document.getElementById('nomorKontrak').value = doc.nomorKontrak || '';
+            document.getElementById('nilaiKontrak').value = doc.nilaiKontrak || '';
+            document.getElementById('pelaksana').value = doc.pelaksana || '';
+            document.getElementById('sumberDana').value = doc.sumberDana || '';
+            document.getElementById('tagihan').value = doc.tagihan || '';
+            document.getElementById('jenisDokumen').value = doc.jenisDokumen || 'Kontrak LS';
+            document.getElementById('nomorSpm').value = doc.nomorSpm || '';
+            document.getElementById('nilaiPencairan').value = doc.nilaiPencairan || '';
+            document.getElementById('statusDokumen').value = doc.status || 'Lengkap';
+            document.getElementById('verifikator').value = doc.verifikator || '';
+            document.getElementById('keterangan').value = doc.keterangan || '';
+
+            initChecklist(doc.checklist || {});
+        }
+
+        function closeModal() {
+            document.getElementById('inputModal').classList.add('hidden');
+        }
+
+        function closeSpmModal() {
+            document.getElementById('spmPrintModal').classList.add('hidden');
+        }
+
+        function saveDocument(e) {
+            if (e) e.preventDefault();
+            let checkedMap = {};
+            let checkedCount = 0;
+
+            itemsList.forEach((_, idx) => {
+                const el = document.getElementById(`chk_${idx}`);
+                if (el && el.checked) {
+                    checkedMap[idx] = true;
+                    checkedCount++;
+                }
+            });
+
+            const editIdx = parseInt(document.getElementById('editIndex').value);
+            const docData = {
+                tglPenerimaan: document.getElementById('tglPenerimaan').value,
+                opd: document.getElementById('opd').value,
+                kegiatan: document.getElementById('kegiatan').value,
+                nomorKontrak: document.getElementById('nomorKontrak').value,
+                nilaiKontrak: document.getElementById('nilaiKontrak').value,
+                pelaksana: document.getElementById('pelaksana').value,
+                sumberDana: document.getElementById('sumberDana').value,
+                tagihan: document.getElementById('tagihan').value,
+                jenisDokumen: document.getElementById('jenisDokumen').value || 'Kontrak LS',
+                nomorSpm: document.getElementById('nomorSpm').value,
+                nilaiPencairan: document.getElementById('nilaiPencairan').value,
+                kelengkapan: `${checkedCount} / ${itemsList.length} Item`,
+                status: document.getElementById('statusDokumen').value,
+                verifikator: document.getElementById('verifikator').value || "-",
+                keterangan: document.getElementById('keterangan').value,
+                checklist: checkedMap
+            };
+
+            if (editIdx >= 0) {
+                documentsData[editIdx] = docData;
+                showToast("Data dokumen berhasil diperbarui!");
+            } else {
+                documentsData.push(docData);
+                showToast("Data dokumen baru berhasil ditambahkan!");
+            }
+
+            localStorage.setItem('spm_maybrat_full_data', JSON.stringify(documentsData));
+            renderTable();
+            closeModal();
+        }
+
+        function printSpmSheet(index) {
+            const doc = documentsData[index];
+            if (!doc) return;
+
+            const sheet = document.getElementById('spmSheetContent');
+            
+            let rowsHtml = '';
+            itemsList.forEach((item, idx) => {
+                const isChecked = doc.checklist && doc.checklist[idx];
+                const isSub = item.startsWith("18.");
+                rowsHtml += `
+                    <tr class="border-b border-black text-xs">
+                        <td class="border-r border-black p-1 text-center font-medium">${idx + 1}</td>
+                        <td class="border-r border-black p-1 ${isSub ? 'pl-4 font-normal' : 'font-semibold'}">${item}</td>
+                        <td class="border-r border-black p-1 text-center font-bold text-sm">${isChecked ? '✓' : ''}</td>
+                        <td class="border-r border-black p-1 text-center"></td>
+                        <td class="p-1"></td>
+                    </tr>
+                `;
+            });
+
+            sheet.innerHTML = `
+                <div class="flex items-center justify-center gap-4 mb-3 pb-2 border-b-2 border-black">
+                    <img src="logo.png" alt="Logo Pemkab Maybrat" class="h-16 w-auto object-contain">
+                    <div class="text-center">
+                        <h2 class="text-xs font-bold tracking-wider uppercase">PEMERINTAH KABUPATEN </h2>
+			<h2 class="text-xs font-bold tracking-wider uppercase">BADAN PENGELOLAAN KEUAGAN DAN ASET DAERAH  </h2>
+                        <h3 class="text-sm font-bold uppercase">SURAT PERINTAH MEMBAYAR LANGSUNG (LS) </h3>
+                        <p class="text-[10px] text-gray-700">Kumurkek, Kabupaten Maybrat, Papua Barat Daya</p>
+                    </div>
+                </div>
+
+                <div class="text-center space-y-1 mb-4">
+                    <h2 class="text-sm font-bold uppercase mt-2">CEK LIST KELENGKAPAN DOKUMEN KONTRAK</h2>
+                    <h3 class="text-xs font-bold uppercase">PEKERJAAN KONSTRUKSI TAHUN 2026</h3>
+                </div>
+
+                <table class="w-full border border-black text-xs mb-4">
+                    <thead>
+                        <tr class="border-b border-black font-bold bg-gray-100 text-center">
+                            <th class="border-r border-black p-1 w-10">NO</th>
+                            <th class="border-r border-black p-1">URAIAN</th>
+                            <th class="border-r border-black p-1 w-16">ADA</th>
+                            <th class="border-r border-black p-1 w-24">TIDAK ADA</th>
+                            <th class="p-1 w-28">KETERANGAN</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+
+                <div class="border border-black p-3 text-xs font-sans space-y-1 mb-4">
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">OPD</span><span class="col-span-9">: ${doc.opd}</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">KEGIATAN</span><span class="col-span-9">: ${doc.kegiatan}</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">NOMOR KONTRAK</span><span class="col-span-9">: ${doc.nomorKontrak}</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">NILAI KONTRAK</span><span class="col-span-9">: Rp. ${Number(doc.nilaiKontrak).toLocaleString('id-ID')},-</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">PELAKSANA</span><span class="col-span-9">: ${doc.pelaksana}</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">TANGGAL</span><span class="col-span-9">: ${doc.tglPenerimaan}</span></div>
+                    <div class="grid grid-cols-12"><span class="col-span-3 font-bold">SUMBER DANA</span><span class="col-span-9">: ${doc.sumberDana || '-'}</span></div>
+                </div>
+
+                <div class="border border-black p-2 text-xs font-bold mb-4">
+                    TAGIHAN : ${doc.tagihan || '-'}
+                </div>
+
+                <div class="border border-black p-2 text-xs mb-6">
+                    <strong>Catatan :</strong> ${doc.keterangan || '-'}
+                </div>
+
+                <div class="flex justify-end text-xs font-sans">
+                    <div class="text-center w-60 space-y-12">
+                        <div>
+                            <p>Kumurkek, ${doc.tglPenerimaan}</p>
+                            <p class="font-bold">Verifikator</p>
+                        </div>
+                        <div>
+                            <p class="font-bold underline uppercase">${doc.verifikator || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('spmPrintModal').classList.remove('hidden');
+        }
+
+        function deleteDoc(index) {
+            if (confirm("Apakah Anda yakin ingin menghapus data dokumen ini?")) {
+                documentsData.splice(index, 1);
+                localStorage.setItem('spm_maybrat_full_data', JSON.stringify(documentsData));
+                renderTable();
+                showToast("Data dokumen berhasil dihapus.");
+            }
+        }
+
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function exportPDF() {
+            if (documentsData.length === 0) {
+                showToast("Belum ada data dokumen untuk diekspor!", true);
+                return;
+            }
+            const element = document.getElementById('printableArea');
+            const opt = {
+                margin:       10,
+                filename:     'SIMONDA_Rekap_Data_Dokumen_SPM_Maybrat.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().from(element).set(opt).save();
+            showToast("Proses unduh PDF dimulai...");
+        }
+
+        function exportWord() {
+            if (documentsData.length === 0) {
+                showToast("Belum ada data dokumen untuk diekspor!", true);
+                return;
+            }
+            const content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>SIMONDA - Rekap Dokumen SPM</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid black; padding: 6px; font-size: 11px; }
+                        th { background-color: #8bc34a; font-weight: bold; text-align: center; }
+                        .kop { text-align: center; margin-bottom: 15px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="kop">
+                        <img src="logo.png" width="70" height="70" alt="Logo"><br>
+                        <h2>PEMERINTAH KABUPATEN MAYBRAT</h2>
+                        <h3>DINAS PEKERJAAN UMUM / SEKRETARIAT DAERAH</h3>
+                        <p>Kumurkek, Kabupaten Maybrat, Papua Barat Daya</p>
+                        <hr>
+                        <h4>REKAPITULASI OUTPUT DATA DOKUMEN SPM (SIMONDA) TAHUN 2026</h4>
+                    </div>
+                    ${document.querySelector("#printableArea table").outerHTML}
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'SIMONDA_Rekap_Data_Dokumen_SPM_Maybrat.doc';
+            a.click();
+            showToast("Proses unduh Microsoft Word dimulai...");
+        }
+
+        initChecklist();
+        renderTable();
+    </script>
+</body>
+</html>
